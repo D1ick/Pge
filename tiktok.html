@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscador TikTok</title>
+  <style>
+    body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#search-container {
+  text-align: center;
+  margin-top: 30px;
+}
+
+#searchInput {
+  padding: 15px;
+  border: 2px solid #3498db;
+  border-radius: 8px;
+  width: 70%;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.3s ease-in-out;
+}
+
+#searchInput:focus {
+  border-color: #2980b9;
+}
+
+#searchButton {
+  background-color: #3498db;
+  color: white;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease-in-out;
+}
+
+#searchButton:hover {
+  background-color: #2980b9;
+}
+
+#results-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+#history-container {
+  margin-top: 30px;
+  text-align: left;
+  max-width: 80%;
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.video-card {
+  margin: 20px;
+  padding: 20px;
+  border: 2px solid #ccc;
+  border-radius: 15px;
+  background-color: #fff;
+  width: 320px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.video-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.video-thumbnail {
+  max-width: 100%;
+  border-radius: 15px;
+  transition: transform 0.3s ease-in-out;
+}
+
+.video-card:hover .video-thumbnail {
+  transform: scale(1);
+}
+
+.video-title {
+  margin: 15px 0;
+  font-size: 18px;
+  font-weight: bold;
+  transition: color 0.3s ease-in-out;
+}
+
+.video-card:hover .video-title {
+  color: #3498db;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 15px;
+  transition: transform 0.3s ease-in-out;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+}
+
+.username {
+  font-weight: bold;
+  font-size: 16px;
+  transition: color 0.3s ease-in-out;
+}
+
+.video-card:hover .username {
+  color: #3498db;
+}
+
+.stats {
+  display: flex;
+  margin-top: 10px;
+}
+
+.stat {
+  margin-right: 15px;
+  font-size: 14px;
+  transition: color 0.3s ease-in-out;
+}
+
+.video-card:hover .stat {
+  color: #3498db;
+}
+
+.video-player {
+  width: 100%;
+  height: 250px;
+  margin-bottom: 15px;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.download-button {
+  background-color: #3498db;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.download-button:hover {
+  background-color: #2980b9;
+}
+
+#historyList {
+  list-style-type: none;
+  padding: 0;
+}
+
+#historyList li {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background-color: #ccc;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+#historyList li:hover {
+  background-color: #aaa;
+}
+
+  </style>
+</head>
+<body>
+
+  <div id="search-container">
+    <input type="text" id="searchInput" placeholder="Buscar por URL de TikTok">
+    <button id="searchButton" class="searchButton" onclick="buscarVideos()">Buscar</button>
+  </div>
+
+  <div id="results-container"></div>
+  <div id="results-list"></div>
+
+  <div id="history-container">
+    <h2>Historial Reciente</h2>
+    <ul id="historyList"></ul>
+  </div>
+
+  <script>
+    const historyLimit = 10;
+    const searchHistory = [];
+
+    async function buscarVideos() {
+      const searchTerm = document.getElementById("searchInput").value;
+      const apiUrl = `https://api.lolhuman.xyz/api/tiktok?apikey=GataDios&url=${searchTerm}`;
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // Agrega aquí los encabezados reales necesarios
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.status === 200) {
+          mostrarResultados(data.result);
+          actualizarHistorial(searchTerm);
+        } else {
+          mostrarError("Error en la búsqueda. Inténtalo de nuevo.");
+        }
+      } catch (error) {
+        mostrarError("Hubo un problema al realizar la búsqueda.");
+      }
+    }
+
+    function mostrarResultados(video) {
+      const resultadosContainer = document.getElementById("results-container");
+      resultadosContainer.innerHTML = ""; // Limpiar resultados anteriores
+
+      const videoHTML = `
+        <div class="video-card">
+          <div class="video-player">
+            <video controls class="video-thumbnail">
+              <source src="${video.link}" type="video/mp4">
+              Tu navegador no soporta la etiqueta de video.
+            </video>
+          </div>
+          <div class="video-title">${video.title}</div>
+          <div class="user-info">
+            <img class="user-avatar" src="${video.author.avatar}" alt="Avatar del usuario">
+            <div class="username">@${video.author.username}</div>
+          </div>
+          <div class="stats">
+            <div class="stat">Reproducciones: ${video.statistic.play_count}</div>
+            <div class="stat">Likes: ${video.statistic.like_count}</div>
+            <div class="stat">Compartidos: ${video.statistic.share_count}</div>
+            <div class="stat">Comentarios: ${video.statistic.comment_count}</div>
+          </div>
+          <button class="download-button" onclick="descargarVideo('${video.link}', '${video.title}')">Descargar Video</button>
+        </div>
+      `;
+
+      resultadosContainer.innerHTML += videoHTML;
+    }
+
+    function mostrarError(mensaje) {
+      const resultadosContainer = document.getElementById("results-container");
+      resultadosContainer.innerHTML = `<p style="color: red;">${mensaje}</p>`;
+    }
+
+    function descargarVideo(url, title) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${title}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function actualizarHistorial(searchTerm) {
+      if (searchHistory.length === historyLimit) {
+        searchHistory.pop();
+      }
+      searchHistory.unshift(searchTerm);
+      mostrarHistorial();
+    }
+
+    function mostrarHistorial() {
+  const historyList = document.getElementById("historyList");
+  historyList.innerHTML = "";
+
+  if (searchHistory.length === 0) {
+    const noHistoryMessage = document.createElement("li");
+    noHistoryMessage.textContent = "Aún no se han guardado URLs.";
+    historyList.appendChild(noHistoryMessage);
+  } else {
+    searchHistory.forEach((term) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = term;
+      historyList.appendChild(listItem);
+    });
+  }
+}
+
+
+  </script>
+<BODY BACKGROUND="pc.jpg">
+</body>
+</html>
